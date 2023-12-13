@@ -105,6 +105,7 @@ type metricsInstrumentedHandler struct {
 
 func newMetricsInstrumentedHandler(handler string, mh MiddlewareHandler) *metricsInstrumentedHandler {
 	httpMetrics.init.Do(func() {
+		fmt.Printf("initializing HTTP metrics")
 		initHTTPMetrics()
 	})
 
@@ -142,7 +143,7 @@ func (h *metricsInstrumentedHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	observeRequest := func(status int) {
 		requestSize := float64(computeApproximateRequestSize(r))
 		responseSize := float64(wrec.Size())
-		fmt.Printf("incrementing metrics with %d %v %v\n", status, requestSize, responseSize)
+		fmt.Printf("incrementing metrics with %d %v %v into %p\n", status, requestSize, responseSize, &httpMetrics)
 		// If the code hasn't been set yet, and we didn't encounter an error, we're
 		// probably falling through with an empty handler.
 		if statusLabels["code"] == "" {
@@ -150,6 +151,7 @@ func (h *metricsInstrumentedHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			// returned on fallthrough so we want to reflect that.
 			statusLabels["code"] = metrics.SanitizeCode(status)
 		}
+		fmt.Printf("incrementing metrics with labels %v into %p\n", statusLabels, &httpMetrics)
 
 		httpMetrics.requestDuration.With(statusLabels).Observe(dur)
 		httpMetrics.requestSize.With(statusLabels).Observe(requestSize)

@@ -2,6 +2,7 @@ package caddyhttp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -139,6 +140,7 @@ func (h *metricsInstrumentedHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	httpMetrics.requestCount.With(labels).Inc()
 
 	observeRequest := func(status int) {
+		fmt.Printf("incrementing metrics with %d\n", status)
 		// If the code hasn't been set yet, and we didn't encounter an error, we're
 		// probably falling through with an empty handler.
 		if statusLabels["code"] == "" {
@@ -153,8 +155,12 @@ func (h *metricsInstrumentedHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	if err != nil {
+		fmt.Printf("error %v\n", err)
 		if handlerError, ok := err.(HandlerError); ok {
+			fmt.Printf("error is a handler error\n")
 			observeRequest(handlerError.StatusCode)
+		} else {
+			fmt.Printf("error is not a handler error\n")
 		}
 
 		httpMetrics.requestErrors.With(labels).Inc()

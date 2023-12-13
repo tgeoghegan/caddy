@@ -140,7 +140,9 @@ func (h *metricsInstrumentedHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	httpMetrics.requestCount.With(labels).Inc()
 
 	observeRequest := func(status int) {
-		fmt.Printf("incrementing metrics with %d\n", status)
+		requestSize := float64(computeApproximateRequestSize(r))
+		responseSize := float64(wrec.Size())
+		fmt.Printf("incrementing metrics with %d %v %v\n", status, requestSize, responseSize)
 		// If the code hasn't been set yet, and we didn't encounter an error, we're
 		// probably falling through with an empty handler.
 		if statusLabels["code"] == "" {
@@ -150,8 +152,8 @@ func (h *metricsInstrumentedHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		}
 
 		httpMetrics.requestDuration.With(statusLabels).Observe(dur)
-		httpMetrics.requestSize.With(statusLabels).Observe(float64(computeApproximateRequestSize(r)))
-		httpMetrics.responseSize.With(statusLabels).Observe(float64(wrec.Size()))
+		httpMetrics.requestSize.With(statusLabels).Observe(requestSize)
+		httpMetrics.responseSize.With(statusLabels).Observe(responseSize)
 	}
 
 	if err != nil {
